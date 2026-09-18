@@ -534,8 +534,16 @@ def write_bridge_layer(outlayer: Path, repo_config: dict, packages: list[Package
 {repo_config["basesrcurl_bbvar"]} = "{repo_config["basesrcurl"]}"
 {repo_config["baseurl_bbvar"]} = "{repo_config["baseurl"]}"
 ''', end='', file=f)
-        for altarch_data in repo_config.get("altarch", {}).values():
+        altarch_defs = list(repo_config.get("altarch", {}).values())
+        for altarch_data in altarch_defs:
             print(f'{altarch_data["baseurl_bbvar"]} = "{altarch_data["baseurl"]}"', file=f)
+        print(f'''
+SRC_URI[vardepsexclude] += "\\
+ {repo_config["basesrcurl_bbvar"]} \\
+ {repo_config["baseurl_bbvar"]} \\
+ {' \\\n '.join(altarch_data["baseurl_bbvar"] for altarch_data in altarch_defs)} \\
+"
+''', end='', file=f)
 
 def cli_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate a proxy BitBake layer for a DNF repo")
