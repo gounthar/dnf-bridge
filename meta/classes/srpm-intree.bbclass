@@ -16,7 +16,8 @@
 # by other packages will need to be expressed by hand (or their
 # do_build will simply fail).
 
-SPECFILE ?= "SPECS/${PN}.spec"
+SRPM_NAME ?= "${PN}"
+SPECFILE ?= "SPECS/${SRPM_NAME}.spec"
 SRC_URI = "file://${SPECFILE}"
 UNPACKDIR = "${WORKDIR}/build"
 S = "${UNPACKDIR}"
@@ -76,7 +77,7 @@ python() {
                     continue
                 m = re.match(r"package ([^ ]*)$", section.id)
                 if m:
-                    d.appendVar("PACKAGES", f" ${{PN}}-{m.group(1)}")
+                    d.appendVar("PACKAGES", f" ${{SRPM_NAME}}-{m.group(1)}")
                     continue
 
                 # FIXME "Requires:" require parsing list[str] in section.data?
