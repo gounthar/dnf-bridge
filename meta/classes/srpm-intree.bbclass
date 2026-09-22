@@ -71,11 +71,11 @@ python() {
         # generated RPMs
         with spec.sections() as sections:
             for section in sections:
-                m = re.match(r"package -n ([^ ]*)$", section.id)
+                m = re.match(r"package +-n +([^ ]*)$", section.id)
                 if m:
                     d.appendVar("PACKAGES", f" {m.group(1)}")
                     continue
-                m = re.match(r"package ([^ ]*)$", section.id)
+                m = re.match(r"package +([^ ]*)$", section.id)
                 if m:
                     d.appendVar("PACKAGES", f" ${{SRPM_NAME}}-{m.group(1)}")
                     continue
