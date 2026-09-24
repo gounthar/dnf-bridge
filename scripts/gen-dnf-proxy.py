@@ -310,9 +310,7 @@ PR = "{pkg.release}"
 
         url = (pkg.remote_location(schemes=["https", "http", "file"])
                .replace(repo_config["basesrcurl"], f"${{{repo_config['basesrcurl_bbvar']}}}"))
-        print(f'\nURI_src = "{url};name=src;unpack=0"',
-              file=r)
-        print(f'SRC_URI = "${{URI_src}}"', file=r)
+        print(f'\nSRC_URI = "{url};name=src;unpack=0"', file=r)
         assert pkg.chksum[0] == hawkey.chksum_type("sha256")
         print(f'SRC_URI[src.sha256sum] = "{pkg.chksum[1].hex()}"', file=r)
 
@@ -331,9 +329,7 @@ PR = "{pkg.release}"
             for binpkg in arch_rpmdata.rpms:
                 url = (binpkg.remote_location(schemes=["https", "http", "file"])
                        .replace(arch_baseurl, "${%s}" % arch_baseurl_bbvar))
-                print(f'\nURI_{arch}_{binpkg.name} = "{url};name={arch}_{binpkg.name};unpack=0"',
-                      file=r)
-                print(f'SRC_URI:append = " ${{URI_{arch}_{binpkg.name}}}"', file=r)
+                print(f'\nSRC_URI:append = " {url};name={arch}_{binpkg.name};unpack=0"', file=r)
                 assert binpkg.chksum[0] == hawkey.chksum_type("sha256")
                 print(f'SRC_URI[{arch}_{binpkg.name}.sha256sum] = "{binpkg.chksum[1].hex()}"', file=r)
 
