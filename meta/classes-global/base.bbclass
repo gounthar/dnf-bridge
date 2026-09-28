@@ -9,6 +9,7 @@ CLASSOVERRIDE ?= "class-target"
 
 inherit utils
 inherit utility-tasks
+inherit logging
 
 die() {
 	bbfatal_log "$*"
