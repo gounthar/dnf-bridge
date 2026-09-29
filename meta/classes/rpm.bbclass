@@ -30,31 +30,6 @@ BUILDDEPSDIR = "${WORKDIR}/${BUILDDEPS_REPONAME}"
 addtask builddeps_repo after do_unpack
 python do_builddeps_repo() {
     import dnfbridge
-    rtdepsdir = d.getVar("RUNTIMEDEPSDIR")
-    def accumulate_rdeps(depdict: dict[str, str], newdeps_fname: str) -> None:
-        "Accumulate dependencies from file `newdeps_fname` into `depdict`"
-        with open(newdeps_fname) as fd:
-            newdeps = fd.read().split()
-        _accumulate_rdeps(depdict, newdeps)
-    def _accumulate_rdeps(depdict: dict[str, str], newdeps: list[str]) -> None:
-        "Accumulate dependencies from `newdeps` list into `depdict`"
-        for dep in newdeps:
-            bb.debug(1, f"_accumulate_rdeps handling {dep} ...")
-            bindep = dep[4:] if dep.startswith("rpm/") else dep
-            bindep = bindep.lstrip('/') # leading slash for file provides
-            bindep = dnfbridge.resolve_virtual_runtime_dep(d, bindep)
-
-            dep = f"rpm/{bindep}"
-            rpmname = dep[len("rpm/"):]
-            bb.debug(1, f" ... rpmname = {rpmname}")
-            if rpmname in depdict:
-                continue
-            recipename = os.path.basename(os.readlink(os.path.join(rtdepsdir, "_", dep)))
-            depdict[rpmname] = recipename
-            pkg_top_rtdepsdir = os.path.join(rtdepsdir, recipename)
-            entries = os.listdir(pkg_top_rtdepsdir)
-            assert len(entries) == 1, f"dnf-bridge internal error, {pkg_top_rtdepsdir} contains {entries}"
-            accumulate_rdeps(depdict, os.path.join(pkg_top_rtdepsdir, entries[0], f"{rpmname}.rtdeps"))
 
     recdepdict = {} # binrpm -> recipe
 
@@ -62,16 +37,8 @@ python do_builddeps_repo() {
     rdeps = [dep for dep in depends if dep.startswith("rpm/")]
     #bdeps = [dep for dep in depends if not dep.startswith("rpm/")]
 
-    _accumulate_rdeps(recdepdict, rdeps)
-
-    rpmsdeploy_dir = d.getVar("DEPLOY_DIR_RPMS")
-    builddeps_dir = d.getVar("BUILDDEPSDIR")
-    os.makedirs(builddeps_dir, exist_ok=True)
-    for dep in recdepdict:
-        recipename = os.path.basename(os.readlink(os.path.join(rtdepsdir, '_/rpm', dep)))
-        # FIXME we should really only copy the specific RPM, but we'd need its nvr for this
-        oe.path.copyhardlinktree(os.path.join(rpmsdeploy_dir, recipename, "RPMS"),
-                                 os.path.join(builddeps_dir, dep))
+    dnfbridge.accumulate_rdeps_from_list(d, recdepdict, rdeps)
+    dnfbridge.create_dnfrepo_with_contents(d, d.getVar("BUILDDEPSDIR"), recdepdict.keys())
 }
 
 python () {
