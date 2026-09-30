@@ -41,6 +41,7 @@ python do_builddeps_repo() {
     dnfbridge.create_dnfrepo_with_contents(d, d.getVar("BUILDDEPSDIR"), recdepdict.keys())
 }
 
+# do_builddeps_repo needs all DEPENDS' do_deploy_runtimedeps_
 python () {
     PREFIX = 'rpm/'
     rpm_depends = [dep for dep in d.getVar("DEPENDS").split() if dep.startswith(PREFIX)]
