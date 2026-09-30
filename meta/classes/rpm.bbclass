@@ -122,10 +122,6 @@ do_build() {
     1) maybe_bootstrap=--bootstrap ;;
     esac
 
-    # FIXME should rather use the following, but empty PRAUTO is not
-    # properly groked by build-env, should ensure it is zero (but
-    # using podman directly would help and also be necessary for no-PRSERV case)
-    # --define "autorev ${@'+b${PRAUTO}' if (${PRAUTO}) else ''}"
     env XCPNG_OCI_RUNNER=podman ${XCPNGDEV} container build "9.0" \
         $maybe_bootstrap \
         --platform "${CONTAINER_ARCH}" \
