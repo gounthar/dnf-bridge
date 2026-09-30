@@ -140,3 +140,52 @@ python do_build_setscene () {
 # FIXME we MUST not do that, but for some reason disabling network
 # fails with "newuidmap: write to uid_map failed"
 do_build[network] = "1"
+
+
+addtask checkinstall after do_build
+do_checkinstall[noexec] = "1"
+do_checkinstall[depends] = "build-env:do_deploy build-env:do_build_bootstrap"
+python check_install() {
+    import subprocess
+
+    TASK_PREFIX = "do_checkinstall_"
+    this_package = d.getVarFlag(d.getVar("BB_RUNTASK"), "rpm_package")
+
+    bb.note(f"check_install for {this_package}")
+
+    # prepare a dnf repo with all deps
+    rdepsdir = f"{d.getVar('WORKDIR')}/rdeps/{this_package}"
+    recdepdict = {} # binrpm -> recipe
+    dnfbridge.rtdeps.accumulate_rdeps_from_list(d, recdepdict, [this_package])
+    dnfbridge.rtdeps.create_dnfrepo_with_contents(d, rdepsdir, recdepdict.keys())
+
+    cmd = ['env', 'XCPNG_OCI_RUNNER=podman', d.getVar('XCPNGDEV'), 'container', 'run', '9.0',
+           "--bootstrap",       # we don't care about the --isarpm contents here
+           '--platform', d.getVar('CONTAINER_ARCH'),
+           '--debug',
+           '--no-network', '--no-update', '--disablerepo=*',
+           '--local-repo', f"rdeps:{rdepsdir}", '--enablerepo', 'rdeps',
+           d.getVar('XCPNGDEV_BUILD_OPTS'),
+           '--',
+           'sudo', 'dnf', 'install', '-y', this_package]
+    bb.debug(1, f"Running: {' '.join(cmd)}")
+    subprocess.check_call(cmd)
+}
+
+# do_checkinstall needs each PACKAGES' do_checkinstall_
+python () {
+    import re
+    pn = d.getVar('PN')
+    for pkg in d.getVar("PACKAGES").split():
+        # Setup do_checkinstall_* task with check_install as
+        # implementation.  Sanitize the package name to create a valid
+        # python function name, and pass the RPM name through a flag.
+        newtask = f"do_checkinstall_{re.sub(r'\W', '_', pkg)}"
+        bb.build.addtask(newtask, "do_checkinstall", f"do_deploy_runtimedeps_{pkg}", d)
+        d.setVar(newtask, d.getVar("check_install", False))
+        d.setVarFlags(newtask, d.getVarFlags("check_install"))
+        d.setVarFlag(newtask, "rpm_package", pkg)
+        # FIXME we MUST not do that, but for some reason disabling network
+        # fails with "newuidmap: write to uid_map failed"
+        d.setVarFlag(newtask, "network", "1")
+}
