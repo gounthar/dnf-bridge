@@ -40,7 +40,7 @@ python() {
     # branches of a %if, and any macro in extracted values are resolved
     macro_defines = []
     for macrodef in d.getVar("RPM_MACROS").split():
-        macro, expansion = macrodef.split("=")
+        macro, expansion = macrodef.split("=", 1)
         macro_defines.extend(["-D", f"{macro} {expansion}"])
     expanded_spec = subprocess.run(["rpmspec", "--parse", d.getVar('SPECFILE_fn'),
                                     ] + macro_defines,
