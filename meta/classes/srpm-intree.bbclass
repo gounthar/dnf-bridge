@@ -36,6 +36,9 @@ python() {
     from specfile import Specfile
     import subprocess
 
+    RPM_INVALID_CHARS = " ()[]:"
+    NAME_SANITIZER = str.maketrans(RPM_INVALID_CHARS, "_" * len(RPM_INVALID_CHARS))
+
     # first, get rpm macros expanded, so we only parse the relevant
     # branches of a %if, and any macro in extracted values are resolved
     macro_defines = []
@@ -66,6 +69,13 @@ python() {
                         m = re.match(r"([^ ]+) (>=?|=) [^ ]+$", breq)
                         if m:
                             breq = m.group(1)
+                        # deal with virtual packages using invalid chars, which cannot
+                        # be dealt with using RPROVIDES otherwise
+                        for char in RPM_INVALID_CHARS:
+                            if char in breq:
+                                breq = "virtual/" + breq.translate(NAME_SANITIZER)
+                                break
+
                         d.appendVar("DEPENDS", " rpm/" + breq)
 
         # generated RPMs
