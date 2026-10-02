@@ -405,6 +405,8 @@ def compute_bridge_data(archs: list[str], repo_configs: list[dict]) -> BridgeDat
                     srcurl = config["srcurl"].format(basesrcurl=config["basesrcurl"], section=section)
                     dbs['src'].repos.add_new_repo(f"{baserepoid}-src", confs['src'], [srcurl])
                     for arch in archs:
+                        if arch in config.get("skip_archs", []):
+                            continue
                         binurl = config["binurl"].format(
                             baseurl=altarch_aware_variable("baseurl", config, arch),
                             section=section, arch=arch)
@@ -415,6 +417,8 @@ def compute_bridge_data(archs: list[str], repo_configs: list[dict]) -> BridgeDat
                 srcurl = config["srcurl"].format(basesrcurl=config["basesrcurl"])
                 dbs['src'].repos.add_new_repo(f"{baserepoid}-src", confs['src'], [srcurl])
                 for arch in archs:
+                    if arch in config.get("skip_archs", []):
+                        continue
                     binurl = config["binurl"].format(
                         baseurl=altarch_aware_variable("baseurl", config, arch),
                         arch=arch)
