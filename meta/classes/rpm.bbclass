@@ -49,7 +49,6 @@ python () {
 # Get a bumped PRAUTO to bump package revision with "+b<N>" on
 # rebuilds without source change.
 # Adapted from yocto's package.bbclass
-# FIXME should be tied to PF, not just PN (currently does not reset on EVR bump)
 PRSERV_ACTIVE = "${@bool(d.getVar("PRSERV_HOST"))}"
 PRSERV_ACTIVE[vardepvalue] = "${PRSERV_ACTIVE}"
 package_get_auto_pr[vardepsexclude] = "BB_TASKDEPDATA"
@@ -93,7 +92,7 @@ python package_get_auto_pr() {
     try:
         conn = oe.prservice.prserv_make_conn(d)
         if conn is not None:
-            # FIXME dnf-bridge: doublecheck we don't miss anything removed yerehere
+            # FIXME dnf-bridge: doublecheck we don't miss anything removed here
             auto_pr = conn.getPR(version, pkgarch, checksum)
             conn.close()
     except Exception as e:
