@@ -97,7 +97,9 @@ python() {
                     d.appendVar("PACKAGES", f" ${{SRPM_NAME}}-{m.group(1)}")
                     continue
 
-                # FIXME "Requires:" require parsing list[str] in section.data?
+                # FIXME "Requires:" require parsing list[str] in
+                # section.data, but would anyway not be complete, as a
+                # number of them are generated during build
 }
 
 # include this last, it requires those fields we filled just above
