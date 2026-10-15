@@ -32,7 +32,6 @@ SPECFILE_fn ?= "${THISDIR}/${PN}/${SPECFILE}"
 
 RPM_MACROS ?= ""
 
-# FIXME must depend on file://'s in SRC_URI
 # extract metadata from specfile: PV, PR, SRC_URI, DEPENDS, PACKAGES
 python() {
     # this block depends on the specfile
