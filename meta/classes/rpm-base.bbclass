@@ -80,9 +80,6 @@ python () {
         d.appendVarFlag("do_deploy_rtdeps", "vardeps", f' RDEPENDS:{package} RPROVIDES:{package}')
 }
 
-# FIXME: should generate do_deploy_runtimedeps_ for PROVIDES as well
-# or we cannot refer to them in Requires:
-# FIXME: lacks depends on RDEPENDS:*
 python () {
     # Create tasks to recursively deploy RDEPENDS packages, culling
     # the depgraph to necessary packages only (ie. do not follow
