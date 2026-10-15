@@ -20,7 +20,6 @@ RECIPE_DEPLOY_DIR = "${DEPLOY_DIR_RPMS}/${PN}"
 
 RUNTIMEDEPSDIR = "${TMPDIR}/rtdeps"
 
-# FIXME: should be removed by do_clean?
 addtask deploy after do_build
 do_deploy() {
     # the package files
