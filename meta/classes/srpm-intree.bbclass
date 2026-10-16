@@ -45,6 +45,7 @@ python() {
     for macrodef in d.getVar("RPM_MACROS").split():
         macro, expansion = macrodef.split("=", 1)
         macro_defines.extend(["-D", f"{macro} {expansion}"])
+    bb.parse.mark_dependency(d, d.getVar('SPECFILE_fn'))
     expanded_spec = subprocess.run(["rpmspec", "--parse", d.getVar('SPECFILE_fn'),
                                     ] + macro_defines,
                                    capture_output=True, check=True, text=True).stdout
