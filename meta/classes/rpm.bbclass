@@ -122,17 +122,35 @@ do_build() {
     1) maybe_bootstrap=--bootstrap ;;
     esac
 
-    env XCPNG_OCI_RUNNER=podman ${XCPNGDEV} container build "9.0" \
-        $maybe_bootstrap \
-        --platform "${CONTAINER_ARCH}" \
-        --debug \
-        --no-network --no-update --disablerepo="*" \
-        --local-repo="${BUILDDEPSDIR}" --enablerepo="${BUILDDEPS_REPONAME}" \
-        --output-dir="${WORKDIR}" \
-        --define "autorev +b${PRAUTO}" \
-        ${XCPNGDEV_BUILD_OPTS} \
-        "${S}"
+    # Rootless podman with --userns=keep-id sometimes hands runc a user namespace
+    # mapping with no entry for uid 0 when several containers are created at the
+    # same moment, and the build fails with exit 126 before the container starts.
+    # Retry only that failure, a bounded number of times.
+    attempt=0
+    while :; do
+        attempt=$(expr $attempt + 1)
+        rc=0
+        env XCPNG_OCI_RUNNER=podman ${XCPNGDEV} container build "9.0" \
+            $maybe_bootstrap \
+            --platform "${CONTAINER_ARCH}" \
+            --debug \
+            --no-network --no-update --disablerepo="*" \
+            --local-repo="${BUILDDEPSDIR}" --enablerepo="${BUILDDEPS_REPONAME}" \
+            --output-dir="${WORKDIR}" \
+            --define "autorev +b${PRAUTO}" \
+            ${XCPNGDEV_BUILD_OPTS} \
+            "${S}" 2>"${T}/container-build.err" || rc=$?
+        cat "${T}/container-build.err" >&2
+        if [ $rc -ne 126 ] || [ $attempt -ge ${CONTAINER_START_RETRIES} ] ||
+           ! grep -q "user namespaces enabled, but no mapping found for uid" "${T}/container-build.err"; then
+            break
+        fi
+        bbwarn "container start failed on the user namespace mapping (attempt $attempt of ${CONTAINER_START_RETRIES}), retrying"
+        sleep 5
+    done
+    return $rc
 }
+CONTAINER_START_RETRIES ??= "3"
 
 SSTATETASKS += "do_build"
 do_build[sstate-plaindirs] = "${WORKDIR}/SRPMS ${WORKDIR}/RPMS"
